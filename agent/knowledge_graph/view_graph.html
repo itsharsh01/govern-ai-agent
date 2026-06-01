@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GovernAI — Knowledge Graph</title>
+  <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3d8bfd;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 12px 20px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-right: auto;
+    }
+    header h1 span { color: var(--accent); }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    input[type="search"], select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    input[type="search"] { min-width: 220px; }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    button:hover { filter: brightness(1.1); }
+    button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    main { flex: 1; display: flex; min-height: 0; }
+    #graph {
+      flex: 1;
+      background: radial-gradient(ellipse at center, #151c28 0%, var(--bg) 70%);
+    }
+    aside {
+      width: 280px;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      padding: 16px;
+      overflow-y: auto;
+      font-size: 0.8rem;
+    }
+    aside h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+    .legend-item input { accent-color: var(--accent); }
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    #stats {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    #detail {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    #detail b { color: var(--text); }
+    .banner {
+      display: none;
+      padding: 16px 20px;
+      background: #3d2a14;
+      border-bottom: 1px solid #6b4423;
+      color: #f5d9a8;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+    .banner.visible { display: block; }
+    .banner code {
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="banner" class="banner">
+    Could not load <code>graph_data.json</code>. Export from Neo4j first, then serve this folder over HTTP:
+    <br><br>
+    <code>uv run python agent/knowledge_graph/export_graph.py</code><br>
+    <code>cd agent/knowledge_graph &amp;&amp; python -m http.server 8080</code><br>
+    Open <code>http://localhost:8080/view_graph.html</code>
+  </div>
+
+  <header>
+    <h1><span>Govern</span>AI Knowledge Graph</h1>
+    <div class="controls">
+      <input type="search" id="search" placeholder="Search nodes…" />
+      <select id="relFilter">
+        <option value="">All relationships</option>
+      </select>
+      <button type="button" id="fitBtn">Fit view</button>
+      <button type="button" class="secondary" id="physicsBtn">Toggle physics</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="graph"></div>
+    <aside>
+      <h2>Node types</h2>
+      <div id="legend"></div>
+      <div id="stats"></div>
+      <div id="detail">Click a node to see details.</div>
+    </aside>
+  </main>
+
+  <script>
+    const LABEL_COLORS = {
+      SensitiveFinancialData: "#e74c3c",
+      PersonalInformation: "#e67e22",
+      AgentTool: "#3498db",
+      AISecurityRisk: "#9b59b6",
+      PrivacyRisk: "#8e44ad",
+      ComplianceControl: "#27ae60",
+      BankingRegulation: "#16a085",
+      GovernanceRequirement: "#2ecc71",
+      AIAgent: "#f39c12",
+      OntologyNode: "#95a5a6",
+    };
+
+    let network = null;
+    let allData = { nodes: [], edges: [] };
+    let physicsOn = true;
+    const hiddenGroups = new Set();
+
+    async function loadData() {
+      const res = await fetch("graph_data.json");
+      if (!res.ok) throw new Error("graph_data.json not found");
+      return res.json();
+    }
+
+    function buildLegend(groups) {
+      const el = document.getElementById("legend");
+      el.innerHTML = "";
+      [...groups].sort().forEach((group) => {
+        const row = document.createElement("label");
+        row.className = "legend-item";
+        row.innerHTML = `
+          <input type="checkbox" checked data-group="${group}" />
+          <span class="swatch" style="background:${LABEL_COLORS[group] || "#95a5a6"}"></span>
+          <span>${group.replace(/([A-Z])/g, " $1").trim()}</span>
+        `;
+        row.querySelector("input").addEventListener("change", (e) => {
+          if (e.target.checked) hiddenGroups.delete(group);
+          else hiddenGroups.add(group);
+          renderGraph();
+        });
+        el.appendChild(row);
+      });
+    }
+
+    function buildRelFilter(edges) {
+      const types = [...new Set(edges.map((e) => e.label).filter(Boolean))].sort();
+      const sel = document.getElementById("relFilter");
+      types.forEach((t) => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener("change", renderGraph);
+    }
+
+    function filteredData() {
+      const q = document.getElementById("search").value.trim().toLowerCase();
+      const rel = document.getElementById("relFilter").value;
+
+      let nodes = allData.nodes.filter((n) => !hiddenGroups.has(n.group));
+      if (q) {
+        nodes = nodes.filter(
+          (n) =>
+            n.label.toLowerCase().includes(q) ||
+            (n.category && n.category.toLowerCase().includes(q)) ||
+            (n.risk && String(n.risk).toLowerCase().includes(q))
+        );
+      }
+      const nodeIds = new Set(nodes.map((n) => n.id));
+
+      let edges = allData.edges.filter(
+        (e) => nodeIds.has(e.from) && nodeIds.has(e.to)
+      );
+      if (rel) edges = edges.filter((e) => e.label === rel);
+
+      return {
+        nodes: new vis.DataSet(
+          nodes.map((n) => ({
+            ...n,
+            font: { color: "#e7ecf3", size: 12 },
+            borderWidth: 2,
+            shape: "dot",
+            size: n.group === "AIAgent" ? 22 : 16,
+          }))
+        ),
+        edges: new vis.DataSet(
+          edges.map((e) => ({
+            ...e,
+            color: { color: "#4a5f7a", highlight: "#3d8bfd" },
+            width: 1.5,
+          }))
+        ),
+      };
+    }
+
+    function renderGraph() {
+      const data = filteredData();
+      const container = document.getElementById("graph");
+      const options = {
+        physics: {
+          enabled: physicsOn,
+          barnesHut: {
+            gravitationalConstant: -8000,
+            springLength: 140,
+            damping: 0.12,
+          },
+        },
+        interaction: {
+          hover: true,
+          tooltipDelay: 120,
+          navigationButtons: true,
+          keyboard: true,
+        },
+        nodes: { shadow: true },
+        edges: {
+          smooth: { type: "dynamic" },
+          font: { color: "#8b9cb3", strokeWidth: 0 },
+        },
+      };
+
+      if (network) {
+        network.setData(data);
+      } else {
+        network = new vis.Network(container, data, options);
+        network.on("click", (params) => {
+          const detail = document.getElementById("detail");
+          if (params.nodes.length) {
+            const node = allData.nodes.find((n) => n.id === params.nodes[0]);
+            if (node) {
+              detail.innerHTML = `
+                <b>${node.label}</b><br>
+                Type: ${node.group}<br>
+                ${node.category ? `Category: ${node.category}<br>` : ""}
+                ${node.risk ? `Risk: ${node.risk}` : ""}
+              `;
+            }
+          } else {
+            detail.textContent = "Click a node to see details.";
+          }
+        });
+      }
+
+      document.getElementById("stats").innerHTML = `
+        Visible: <b>${data.nodes.length}</b> nodes,
+        <b>${data.edges.length}</b> edges<br>
+        Total: <b>${allData.nodes.length}</b> nodes,
+        <b>${allData.edges.length}</b> edges
+      `;
+    }
+
+    document.getElementById("fitBtn").addEventListener("click", () => network?.fit());
+    document.getElementById("physicsBtn").addEventListener("click", () => {
+      physicsOn = !physicsOn;
+      network?.setOptions({ physics: { enabled: physicsOn } });
+    });
+    document.getElementById("search").addEventListener("input", renderGraph);
+
+    (async () => {
+      try {
+        allData = await loadData();
+        document.getElementById("banner").classList.remove("visible");
+        const groups = new Set(allData.nodes.map((n) => n.group));
+        buildLegend(groups);
+        buildRelFilter(allData.edges);
+        renderGraph();
+      } catch (err) {
+        document.getElementById("banner").classList.add("visible");
+        console.error(err);
+      }
+    })();
+  </script>
+</body>
+</html>
