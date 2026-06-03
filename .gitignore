@@ -14,3 +14,6 @@ wheels/
 
 # Generated graph export for HTML viewer
 agent/knowledge_graph/graph_data.json
+
+# API local uploads (PDFs)
+data/uploads/

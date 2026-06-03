@@ -1,0 +1,256 @@
+{
+  "system_profile": {
+    "business_purpose": { "value": null, "confidence": 0, "source": null, "required": true },
+    "system_description": { "value": null, "confidence": 0, "source": null, "required": true },
+    "industry": {
+      "value": null,
+      "allowed_values": ["banking", "insurance", "investment", "payments", "lending", "wealth_management", "regtech", "fintech_other"]
+    },
+    "primary_use_case": {
+      "value": null,
+      "allowed_values": [
+        "banking_assistant", "customer_support_agent", "kyc_assistant", "loan_assistant",
+        "investment_advisor", "financial_analysis_agent", "agentic_rag", "multi_agent_system",
+        "fraud_detection", "risk_scoring", "document_processing", "other"
+      ]
+    }
+  },
+
+  "users_and_customers": {
+    "description": { "value": null, "confidence": 0, "source": null, "required": true },
+    "user_types": { "value": [], "confidence": 0, "source": null, "required": true },
+    "customer_types": { "value": [], "confidence": 0, "source": null, "required": true },
+    "geographic_regions": { "value": [], "confidence": 0, "source": null, "required": true }
+  },
+
+  "architecture": {
+    "system_type": {
+      "value": null,
+      "allowed_values": ["single_agent", "multi_agent", "rag_pipeline", "agentic_rag", "workflow_automation", "chatbot_only", "hybrid"]
+    },
+    "agentic": {
+      "is_agentic": { "value": null, "confidence": 0, "source": null, "required": true },
+      "autonomy_level": {
+        "value": null,
+        "allowed_values": ["fully_autonomous", "human_in_the_loop", "human_on_the_loop", "human_in_command"]
+      },
+      "orchestration_pattern": {
+        "value": null,
+        "allowed_values": ["sequential", "parallel", "hierarchical", "event_driven", "reactive", "mixed"]
+      }
+    },
+    "multi_agent": {
+      "is_multi_agent": { "value": null, "confidence": 0, "source": null, "required": true },
+      "number_of_agents": { "value": null, "confidence": 0, "source": null, "required": false },
+      "agent_communication_protocol": {
+        "value": null,
+        "allowed_values": ["direct_api", "message_queue", "shared_memory", "event_bus", "custom"]
+      }
+    },
+    "framework": {
+      "value": null,
+      "allowed_values": ["langchain", "langgraph", "llamaindex", "autogen", "crewai", "semantic_kernel", "haystack", "custom", "none", "other"]
+    },
+    "data_flow": {
+      "user_input_flow": { "value": null, "confidence": 0, "source": null, "required": true },
+      "retrieval_flow": { "value": null, "confidence": 0, "source": null, "required": false },
+      "tool_execution_flow": { "value": null, "confidence": 0, "source": null, "required": false },
+      "response_generation_flow": { "value": null, "confidence": 0, "source": null, "required": true }
+    }
+  },
+
+  "models": {
+    "primary_llm": {
+      "provider": {
+        "value": null,
+        "allowed_values": ["openai", "anthropic", "google", "meta", "mistral", "cohere", "azure_openai", "aws_bedrock", "huggingface", "custom_fine_tuned", "open_source_self_hosted", "other"]
+      },
+      "model_name": { "value": null, "confidence": 0, "source": null, "required": true },
+      "model_version": { "value": null, "confidence": 0, "source": null, "required": false },
+      "access_method": {
+        "value": null,
+        "allowed_values": ["api", "self_hosted", "fine_tuned_api", "bedrock", "azure_openai", "vertex_ai"]
+      }
+    },
+    "secondary_models": { "value": [], "confidence": 0, "source": null, "required": false },
+    "embedding_model": { "value": null, "confidence": 0, "source": null, "required": false }
+  },
+
+  "tooling": {
+    "tools": [
+      {
+        "tool_name": null,
+        "tool_description": null,
+        "access_required": null,
+        "access_currently_has": null,
+        "human_approval_required": null,
+        "approval_for": []
+      }
+    ],
+    "human_approval_config": {
+      "human_approval_required": { "value": null, "confidence": 0, "source": null, "required": true },
+      "approval_for": {
+        "value": [],
+        "allowed_values": [
+          "payments", "account_updates", "loan_approval", "kyc_verification",
+          "large_transactions", "data_export", "customer_communication", "other"
+        ]
+      }
+    },
+    "apis": {
+      "api_list": { "value": [], "confidence": 0, "source": null, "required": false },
+      "api_authentication_method": {
+        "value": null,
+        "allowed_values": ["api_key", "oauth2", "jwt", "mtls", "none", "mixed"]
+      }
+    }
+  },
+
+  "data_assets": {
+    "data_types_processed": {
+      "value": [],
+      "allowed_values": [
+        "customer_pii", "financial_data", "transaction_history", "credit_data",
+        "kyc_documents", "aml_data", "account_data", "investment_portfolio",
+        "behavioral_data", "biometric_data", "health_data", "employment_data",
+        "internal_documents", "market_data", "regulatory_filings", "audit_logs",
+        "communication_data", "geolocation_data", "device_data"
+      ]
+    },
+    "pii_categories": {
+      "value": [],
+      "allowed_values": [
+        "name", "email", "phone", "address", "national_id", "passport",
+        "dob", "tax_id", "bank_account", "card_number", "ssn",
+        "income", "credit_score", "ip_address", "device_id", "cookies",
+        "biometric", "health", "political_views", "religious_beliefs"
+      ]
+    },
+    "sensitive_financial_data": { "value": null, "confidence": 0, "source": null, "required": true },
+    "pii_sent_to_external_llm": { "value": null, "confidence": 0, "source": null, "required": true },
+    "data_encryption": {
+      "at_rest": { "value": null, "confidence": 0, "source": null, "required": true },
+      "in_transit": { "value": null, "confidence": 0, "source": null, "required": true },
+      "standard": {
+        "value": null,
+        "allowed_values": ["aes_256", "aes_128", "rsa_2048", "tls_1_3", "tls_1_2", "other"]
+      }
+    }
+  },
+
+  "knowledge_sources": {
+    "description": { "value": null, "confidence": 0, "source": null, "required": false },
+    "uses_rag": { "value": null, "confidence": 0, "source": null, "required": true },
+    "knowledge_base_description": { "value": null, "confidence": 0, "source": null, "required": false },
+    "document_uploads": {
+      "internal_policy_documents": { "value": [], "confidence": 0, "source": null, "required": false },
+      "system_policy_documents": { "value": [], "confidence": 0, "source": null, "required": false },
+      "other_policy_documents": { "value": [], "confidence": 0, "source": null, "required": false }
+    }
+  },
+
+  "system_access": {
+    "entry_point_curl": { "value": null, "confidence": 0, "source": null, "required": false },
+    "how_to_access": { "value": null, "confidence": 0, "source": null, "required": false },
+    "authentication_curl": { "value": null, "confidence": 0, "source": null, "required": false }
+  },
+
+  "policies": {
+    "internal_ai_policy": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "high" },
+    "acceptable_use_policy": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "medium" },
+    "data_handling_policy": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "high" },
+    "human_oversight_policy": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "high" },
+    "policy_document_refs": { "value": [], "confidence": 0, "source": null, "required": false, "priority": "low" }
+  },
+
+  "security": {
+    "authentication_method": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "high" },
+    "authorization_model": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "high" },
+    "audit_logging_enabled": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "high" },
+    "secrets_management": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "medium" },
+    "network_isolation": { "value": null, "confidence": 0, "source": null, "required": false, "priority": "medium" },
+    "output_filtering": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "high" }
+  },
+
+  "compliance": {
+    "applicable_regulations": {
+      "value": [],
+      "confidence": 0,
+      "source": null,
+      "required": true,
+      "priority": "high",
+      "allowed_values": [
+        "gdpr", "ccpa", "pci_dss", "sox", "hipaa", "dora", "eu_ai_act",
+        "rbi_guidelines", "sebi_regulations", "aml_cft", "other"
+      ]
+    },
+    "data_retention_policy": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "medium" },
+    "cross_border_transfer": { "value": null, "confidence": 0, "source": null, "required": false, "priority": "medium" },
+    "model_governance_framework": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "high" },
+    "consent_management": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "high" }
+  },
+
+  "risk_profile": {
+    "identified_risks": { "value": [], "confidence": 0, "source": null, "required": false, "priority": "medium" },
+    "risk_tolerance": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "medium" },
+    "mitigations_in_place": { "value": [], "confidence": 0, "source": null, "required": true, "priority": "high" },
+    "incident_response_process": { "value": null, "confidence": 0, "source": null, "required": true, "priority": "high" }
+  },
+
+  "discovery_state": {
+    "session_id": null,
+    "started_at": null,
+    "last_updated_at": null,
+    "discovery_phase": {
+      "value": "initial",
+      "allowed_values": ["initial", "core_discovery", "deep_dive", "gap_filling", "validation", "complete"]
+    },
+    "overall_confidence": 0.0,
+    "overall_completeness": 0.0,
+    "section_progress": {
+      "system_profile":      { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "users_and_customers": { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "architecture":        { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "models":              { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "tooling":             { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "data_assets":         { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "knowledge_sources":   { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "system_access":       { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "policies":            { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "security":            { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "compliance":          { "completeness": 0.0, "confidence": 0.0, "status": "not_started" },
+      "risk_profile":        { "completeness": 0.0, "confidence": 0.0, "status": "not_started" }
+    },
+    "known_facts": [],
+    "unknown_areas": [],
+    "critical_gaps": [],
+    "high_risk_flags_triggered": [],
+    "high_risk_flag_types": [
+      "pii_to_llm", "payment_api", "autonomous_actions",
+      "missing_audit_logging", "kyc_data_exposure", "write_operations"
+    ],
+    "inferred_facts": [],
+    "conversation_turns": 0,
+    "facts_extracted_total": 0,
+    "next_question_context": {
+      "target_section": null,
+      "target_field": null,
+      "rationale": null,
+      "question_text": null
+    },
+    "information_sources": {
+      "customer_stated": [],
+      "inferred_from_context": [],
+      "contradictions_detected": []
+    },
+    "discovery_complete": false,
+    "completion_criteria": {
+      "all_critical_fields_filled": false,
+      "all_high_risk_flags_resolved": false,
+      "confidence_threshold_met": false,
+      "completeness_threshold_met": false,
+      "minimum_confidence_required": 0.80,
+      "minimum_completeness_required": 0.85
+    }
+  }
+}

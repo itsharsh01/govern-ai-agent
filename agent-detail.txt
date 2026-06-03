@@ -1,0 +1,360 @@
+# Jupiter AI Discovery Engine - Architecture Design Prompt
+
+You are a Principal AI Architect designing the Discovery Engine for an AI Governance platform called Jupiter AI.
+
+## Background
+
+Jupiter AI is an AI Governance Auditor for enterprise AI systems.
+
+Before auditing a customer's AI system, Jupiter must first understand the system in detail.
+
+The goal is NOT to collect static form information.
+
+The goal is to conduct an intelligent interview and build a Digital Twin of the customer's AI application.
+
+The Discovery Engine should behave like a senior AI auditor who asks intelligent follow-up questions based on the customer's answers.
+
+---
+
+# Objective
+
+Design a Discovery Engine that:
+
+1. Understands the customer's AI system through conversation.
+2. Extracts structured facts from the conversation.
+3. Identifies missing information using a Discovery Schema.
+4. Performs Gap Analysis continuously.
+5. Dynamically asks the next best question.
+6. Builds a complete System Profile.
+7. Maps discovered entities to a Governance Knowledge Graph.
+8. Produces a Digital Twin of the customer's AI system.
+
+The Discovery Engine must maximize information gained while minimizing the number of questions asked.
+
+---
+
+# Important Design Principle
+
+Do NOT use fixed questionnaires.
+
+The Discovery Engine should:
+
+* Extract multiple facts from a single answer.
+* Identify unknown areas.
+* Prioritize high-risk missing information.
+* Ask adaptive follow-up questions.
+* Stop asking questions once confidence is sufficient.
+
+The system should feel like an intelligent conversation rather than a compliance form.
+
+---
+
+# Target Systems
+
+Initially focus on FinTech AI systems such as:
+
+* Banking Assistants
+* Customer Support Agents
+* KYC Assistants
+* Loan Assistants
+* Investment Advisors
+* Financial Analysis Agents
+* Agentic RAG Systems
+* Multi-Agent Systems
+
+---
+
+# Discovery Schema
+
+Design a comprehensive Discovery Schema.
+
+The schema should contain all information required to later perform:
+
+* Security Audits
+* Privacy Audits
+* Governance Audits
+* Compliance Audits
+* Risk Assessments
+* AI Red Teaming
+
+The schema should include but not be limited to:
+
+## System Information
+
+* System Name
+* Business Purpose
+* Industry
+* Users
+* Customer Types
+* Deployment Environment
+
+## Architecture
+
+* Framework
+* Model Provider
+* LLMs Used
+* Agentic Architecture
+* Single Agent vs Multi-Agent
+* Workflow Type
+* Memory Usage
+
+## Tooling
+
+* Tools
+* APIs
+* Databases
+* External Systems
+* Third Party Integrations
+
+## Data Assets
+
+* Customer Data
+* Financial Data
+* Transaction Data
+* KYC Data
+* Internal Documents
+* Sensitive Information
+* PII Categories
+
+## Knowledge Sources
+
+* RAG Usage
+* Documents
+* Databases
+* Vector Stores
+* Data Refresh Process
+* Knowledge Ownership
+
+## Security
+
+* Authentication
+* Authorization
+* Human Approval Flows
+* Role Based Access
+* Audit Logging
+
+## Compliance
+
+* Applicable Regulations
+* Internal Policies
+* Data Retention Requirements
+
+## Operational Information
+
+* Environment
+* Monitoring
+* Observability
+* Existing Evaluations
+
+---
+
+# Discovery State
+
+Design a state object that continuously tracks:
+
+Known Information
+
+Unknown Information
+
+Confidence Scores
+
+Discovery Progress
+
+Remaining Gaps
+
+Risk Indicators
+
+Information Sources
+
+Provide an example schema.
+
+---
+
+# Fact Extraction
+
+Design a Fact Extraction Engine.
+
+Requirements:
+
+* Extract facts from user messages.
+* Extract multiple facts from a single answer.
+* Assign confidence scores.
+* Store source messages.
+* Track contradictions.
+* Detect assumptions.
+
+Example:
+
+User:
+"We built a banking support assistant using LangGraph and a CRM."
+
+Extract:
+
+Industry
+
+Framework
+
+Tool
+
+System Type
+
+Store provenance for every extracted fact.
+
+---
+
+# Gap Analysis Engine
+
+Design a Gap Analysis Engine.
+
+Requirements:
+
+* Compare discovered facts against the Discovery Schema.
+* Identify missing information.
+* Prioritize gaps.
+* Estimate discovery completeness.
+
+The engine should know:
+
+What is known?
+
+What is missing?
+
+What is most important to ask next?
+
+Provide a scoring framework.
+
+---
+
+# Question Selection Engine
+
+Design an adaptive Question Selection Engine.
+
+Requirements:
+
+* Ask the highest value question next.
+* Avoid repetitive questions.
+* Avoid already answered questions.
+* Consider discovery completeness.
+* Consider risk level.
+* Consider system type.
+
+Examples:
+
+If RAG is detected:
+
+Ask about documents, retrieval and vector stores.
+
+If Agentic Architecture is detected:
+
+Ask about tools, permissions and actions.
+
+If Financial Advice is detected:
+
+Ask about approvals and compliance controls.
+
+Design the complete logic.
+
+---
+
+# Risk Prioritization
+
+Design a framework for prioritizing questions.
+
+Examples of high-priority topics:
+
+* Customer Data
+* PAN
+* Aadhaar
+* Payment APIs
+* Transaction Data
+* Financial Advice
+* Agent Actions
+* Write Operations
+
+Questions involving high-risk assets should be prioritized earlier.
+
+Design a risk-weighting system.
+
+---
+
+# Knowledge Graph Integration
+
+Jupiter already contains a FinTech Governance Knowledge Graph.
+
+Design how discovered entities should be mapped to the ontology.
+
+Examples:
+
+Customer Tool
+→ Tool Type
+
+Customer Data Asset
+→ Canonical Asset
+
+Customer Risk
+→ Canonical Risk
+
+Describe:
+
+* Semantic Matching
+* Confidence Scoring
+* Verification Process
+* Mapping Storage
+
+---
+
+# Digital Twin Generation
+
+Design the final output generated by Discovery.
+
+The output should contain:
+
+* Structured System Profile
+* Discovered Tools
+* Data Assets
+* Knowledge Sources
+* Risks
+* Architecture Summary
+* Knowledge Graph Mappings
+* Discovery Confidence
+
+Provide a complete example.
+
+---
+
+# UX Requirements
+
+The Discovery Engine should feel like:
+
+A senior AI governance consultant interviewing a customer.
+
+It should:
+
+* Explain why questions are being asked.
+* Show progress.
+* Show current understanding.
+* Ask intelligent follow-up questions.
+* Build trust.
+* Avoid overwhelming the user.
+
+The conversation should feel natural, professional and consultative.
+
+---
+
+# Deliverables
+
+Provide:
+
+1. Full architecture diagram.
+2. Component breakdown.
+3. State management design.
+4. Discovery schema.
+5. Fact extraction design.
+6. Gap analysis design.
+7. Question generation logic.
+8. Risk prioritization framework.
+9. Knowledge graph integration strategy.
+10. Digital Twin schema.
+11. Example conversation flow.
+12. Recommended implementation strategy using modern LLM agents.
+13. MVP vs Production architecture recommendations.

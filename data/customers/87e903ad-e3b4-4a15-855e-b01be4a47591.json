@@ -1,0 +1,41 @@
+{
+  "id": "87e903ad-e3b4-4a15-855e-b01be4a47591",
+  "name": "Acme Bank",
+  "email": "ops@acme.com",
+  "company": "Acme",
+  "created_at": "2026-06-01T10:25:48.401869Z",
+  "system_information": {
+    "application_name": "PayBot",
+    "application_description": "Handles wire transfers",
+    "application_type": "Banking Assistant",
+    "environment": "Production",
+    "custom_application_type": null,
+    "updated_at": "2026-06-01T10:25:48.416824Z"
+  },
+  "tools": [
+    {
+      "name": "Wire API",
+      "description": "Send international wires",
+      "category": "Payment",
+      "id": "7d9d5d14-f76d-4560-933e-407f5ff2c66e"
+    },
+    {
+      "name": "CRM Search",
+      "description": "Lookup customer records",
+      "category": "Data Access",
+      "id": "a13a9251-f992-49a4-b61f-96f44af6cd3d"
+    }
+  ],
+  "sensitive_data_assets": [
+    "Customer Email",
+    "Account Number"
+  ],
+  "custom_assets": [
+    {
+      "name": "Internal CRM ID",
+      "description": "Staff identifier",
+      "id": "f3fc7233-0f57-4303-b14c-826393c22ec1"
+    }
+  ],
+  "policies": []
+}
