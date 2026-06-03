@@ -3,20 +3,21 @@ from __future__ import annotations
 import os
 from contextlib import asynccontextmanager
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
+
+from agent.api._env import load_project_env
 from fastapi.middleware.cors import CORSMiddleware
 
 from agent.api.mongo.client import close_mongo, connect_mongo
 from agent.api.routes.customers import router as customers_router
-from agent.api.routes.discovery import router as discovery_router
+from agent.api.routes.discovery_v2 import router as discovery_v2_router
 from agent.api.routes.meta import router as meta_router
 from agent.api.storage import ensure_dirs
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    load_dotenv()
+    load_project_env()
     ensure_dirs()
     try:
         connect_mongo()
@@ -47,7 +48,7 @@ app.add_middleware(
 )
 
 app.include_router(customers_router, prefix="/api/v1")
-app.include_router(discovery_router, prefix="/api/v1")
+app.include_router(discovery_v2_router, prefix="/api/v2")
 app.include_router(meta_router, prefix="/api/v1")
 
 
@@ -67,7 +68,7 @@ def run() -> None:
 
     from agent.api.port_check import assert_port_available
 
-    load_dotenv()
+    load_project_env()
     host = os.getenv("API_HOST", "127.0.0.1")
     port = int(os.getenv("API_PORT", "8800"))
     reload = os.getenv("API_RELOAD", "").lower() in ("1", "true", "yes")

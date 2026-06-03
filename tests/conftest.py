@@ -7,3 +7,4 @@ import pytest
 def disable_discovery_llm(monkeypatch):
     monkeypatch.setenv("DISCOVERY_DISABLE_LLM", "1")
     monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)

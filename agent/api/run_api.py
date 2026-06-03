@@ -3,9 +3,9 @@
     uv run python agent/api/run_api.py
 """
 
-from dotenv import load_dotenv
+from agent.api._env import load_project_env
 
-load_dotenv()
+load_project_env()
 
 from agent.api.main import run
 
