@@ -124,6 +124,14 @@ class CustomerRecord(BaseModel):
     name: str
     email: EmailStr
     company: str | None = None
+    password_hash: str | None = Field(
+        default=None,
+        description="PBKDF2 hash for platform login; omitted from API responses",
+    )
+    discovery_session_id: str | None = Field(
+        default=None,
+        description="Single discovery session id for this customer",
+    )
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     system_information: SystemInformationRecord | None = None
     tools: list[ToolRecord] = Field(default_factory=list)

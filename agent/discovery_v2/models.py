@@ -4,7 +4,16 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-AnswerType = Literal["boolean", "enum", "multi_enum", "free_text", "number", "url"]
+AnswerType = Literal[
+    "boolean",
+    "enum",
+    "multi_enum",
+    "free_text",
+    "number",
+    "url",
+    "tool_registry",
+    "document_upload",
+]
 RiskLevel = Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]
 
 
@@ -92,7 +101,14 @@ class CheckConfidenceResult(BaseModel):
 
 
 class UIHint(BaseModel):
-    interaction_type: Literal["text", "boolean", "single_select", "multi_select"]
+    interaction_type: Literal[
+        "text",
+        "boolean",
+        "single_select",
+        "multi_select",
+        "tool_registry",
+        "document_upload",
+    ]
     field_key: str
     label: str
     allowed_values: list[str] | None = None

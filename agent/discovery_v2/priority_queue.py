@@ -25,7 +25,7 @@ SECTION_WEIGHTS: dict[str, int] = {
     "risk_profile": 10,
     "knowledge_sources": 8,
     "users_and_customers": 9,
-    "policies": 7,
+    "policies": 17,
     "system_access": 5,
     "operational": 5,
 }
@@ -479,12 +479,13 @@ PRIORITY_QUEUE_TEMPLATE: list[dict[str, Any]] = [
     },
     {
         "key": "tooling.tools",
-        "priority_score": 32,
-        "risk_level": "MEDIUM",
-        "required": False,
-        "answer_type": "free_text",
+        "priority_score": 48,
+        "risk_level": "HIGH",
+        "required": True,
+        "answer_type": "tool_registry",
         "section": "tooling",
-        "label": "Tools and capabilities the agent can invoke",
+        "label": "Agent tools (name, purpose, access)",
+        "context_hint": "Collect exact tool or API names, not generic categories.",
         "unlocks_on": None,
     },
     {
@@ -590,32 +591,80 @@ PRIORITY_QUEUE_TEMPLATE: list[dict[str, Any]] = [
     },
     {
         "key": "knowledge_sources.document_uploads",
-        "priority_score": 8,
+        "priority_score": 12,
         "risk_level": "LOW",
         "required": False,
-        "answer_type": "free_text",
+        "answer_type": "document_upload",
         "section": "knowledge_sources",
         "label": "Policy and document uploads",
+        "context_hint": "Upload internal AI, data handling, or other governance policy documents.",
         "unlocks_on": None,
     },
     {
         "key": "policies.internal_ai_policy",
-        "priority_score": 14,
-        "risk_level": "LOW",
+        "priority_score": 44,
+        "risk_level": "HIGH",
         "required": True,
         "answer_type": "free_text",
         "section": "policies",
         "label": "Internal AI usage policy",
+        "context_hint": (
+            "Ask for scope, permitted/prohibited AI uses, approved models, "
+            "human review requirements, exceptions, and how the policy is enforced."
+        ),
         "unlocks_on": None,
     },
     {
         "key": "policies.data_handling_policy",
-        "priority_score": 14,
-        "risk_level": "LOW",
+        "priority_score": 44,
+        "risk_level": "HIGH",
         "required": True,
         "answer_type": "free_text",
         "section": "policies",
         "label": "Data handling policy",
+        "context_hint": (
+            "Ask for data categories covered, retention, encryption, sharing rules, "
+            "cross-border transfer, subject rights, and enforcement."
+        ),
+        "unlocks_on": None,
+    },
+    {
+        "key": "policies.acceptable_use_policy",
+        "priority_score": 42,
+        "risk_level": "HIGH",
+        "required": True,
+        "answer_type": "free_text",
+        "section": "policies",
+        "label": "Acceptable use policy",
+        "context_hint": (
+            "Ask for who it applies to, allowed/prohibited behaviors, monitoring, "
+            "violations, exceptions, and enforcement."
+        ),
+        "unlocks_on": None,
+    },
+    {
+        "key": "policies.human_oversight_policy",
+        "priority_score": 42,
+        "risk_level": "HIGH",
+        "required": True,
+        "answer_type": "free_text",
+        "section": "policies",
+        "label": "Human oversight policy",
+        "context_hint": (
+            "Ask for when human approval is required, escalation paths, "
+            "logging, accountability, and exceptions."
+        ),
+        "unlocks_on": None,
+    },
+    {
+        "key": "policies.policy_document_refs",
+        "priority_score": 18,
+        "risk_level": "MEDIUM",
+        "required": False,
+        "answer_type": "free_text",
+        "section": "policies",
+        "label": "Policy document references",
+        "context_hint": "Ask for titles, versions, owners, and where official policy documents live.",
         "unlocks_on": None,
     },
     {
@@ -726,6 +775,7 @@ def build_queue_from_template() -> list[RiskQueueItem]:
                 answer_type=raw["answer_type"],
                 allowed_values=raw.get("allowed_values"),
                 unlocks_on=_normalize_unlocks(raw.get("unlocks_on")),
+                context_hint=raw.get("context_hint"),
             )
         )
     items.sort(key=lambda x: x.priority_score, reverse=True)
@@ -748,7 +798,7 @@ def load_schema_field_keys() -> set[str]:
     with path.open(encoding="utf-8") as fh:
         schema = json.load(fh)
 
-    keys: set[str] = []
+    keys: set[str] = set()
 
     def walk(node: Any, prefix: str) -> None:
         if isinstance(node, dict) and "value" in node and "confidence" in node:
@@ -760,6 +810,9 @@ def load_schema_field_keys() -> set[str]:
             if k == "discovery_state":
                 continue
             child_prefix = f"{prefix}.{k}" if prefix else k
+            if isinstance(child, list) and child and isinstance(child[0], dict):
+                keys.add(child_prefix)
+                continue
             walk(child, child_prefix)
 
     walk(schema, "")

@@ -9,8 +9,12 @@ from agent.api._env import load_project_env
 from fastapi.middleware.cors import CORSMiddleware
 
 from agent.api.mongo.client import close_mongo, connect_mongo
+from agent.api.mongo.repository import ensure_default_customer
+from agent.api.routes.audit import router as audit_router
+from agent.api.routes.auth import router as auth_router
 from agent.api.routes.customers import router as customers_router
 from agent.api.routes.discovery_v2 import router as discovery_v2_router
+from agent.api.routes.knowledge_graph import router as knowledge_graph_router
 from agent.api.routes.meta import router as meta_router
 from agent.api.storage import ensure_dirs
 
@@ -21,6 +25,7 @@ async def lifespan(_app: FastAPI):
     ensure_dirs()
     try:
         connect_mongo()
+        ensure_default_customer()
     except Exception as exc:
         import logging
 
@@ -47,7 +52,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router, prefix="/api/v1")
 app.include_router(customers_router, prefix="/api/v1")
+app.include_router(audit_router, prefix="/api/v1")
+app.include_router(knowledge_graph_router, prefix="/api/v1")
 app.include_router(discovery_v2_router, prefix="/api/v2")
 app.include_router(meta_router, prefix="/api/v1")
 

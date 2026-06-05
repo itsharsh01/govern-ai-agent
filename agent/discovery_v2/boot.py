@@ -17,10 +17,83 @@ def _event(name: str, data: dict[str, Any]) -> dict[str, Any]:
     return {"event": name, "data": data}
 
 
+def _link_customer_session(customer_id: str, session_id: str) -> None:
+    from agent.api.mongo.repository import link_discovery_session
+
+    try:
+        link_discovery_session(customer_id, session_id)
+    except Exception:
+        pass
+
+
+def _ui_hint_for_state(session: dict[str, Any]) -> Any:
+    state = _store.get_state(session)
+    if state.discovery_complete or not state.current_key:
+        return None
+    target = next((q for q in state.queue if q.key == state.current_key), None)
+    if target is None:
+        return None
+    return build_ui_hint(target)
+
+
+def _last_assistant_message(session: dict[str, Any]) -> str:
+    for msg in reversed(session.get("conversation", [])):
+        if msg.get("role") == "assistant":
+            return str(msg.get("content", ""))
+    return ""
+
+
+def iter_resume_events(session: dict[str, Any]) -> Iterator[dict[str, Any]]:
+    state = _store.get_state(session)
+    yield _event("status", {"phase": "resuming", "message": "Resuming your discovery session..."})
+    yield _event(
+        "progress",
+        {
+            "completion_pct": state.completion_pct,
+            "remaining_keys": state.remaining_keys,
+            "discovery_complete": state.discovery_complete,
+        },
+    )
+
+    for msg in session.get("conversation", []):
+        role = msg.get("role")
+        content = str(msg.get("content", ""))
+        if role == "user":
+            yield _event("user_message", {"content": content})
+        elif role == "assistant":
+            yield _event("assistant_message", {"content": content, "phase": "final"})
+
+    response_type: str = "complete" if state.discovery_complete else "discovery"
+    response = TurnResponse(
+        session_id=session["session_id"],
+        assistant_message=_last_assistant_message(session),
+        current_key=state.current_key,
+        completion_pct=state.completion_pct,
+        remaining_keys=state.remaining_keys,
+        discovery_complete=state.discovery_complete,
+        ui_hint=_ui_hint_for_state(session),
+        response_type=response_type,  # type: ignore[arg-type]
+    )
+    yield _event("done", response.model_dump(mode="json"))
+
+
 def iter_boot_events(customer_id: str | None = None) -> Iterator[dict[str, Any]]:
+    if customer_id:
+        existing = _store.find_session_for_customer(customer_id)
+        if existing is not None:
+            if not existing.get("customer_id"):
+                existing["customer_id"] = customer_id
+                _store.save_session(existing)
+            _link_customer_session(customer_id, existing["session_id"])
+            yield from iter_resume_events(existing)
+            return
+
     yield _event("status", {"phase": "booting", "message": "Starting discovery session..."})
 
     session = _store.create_session(customer_id=customer_id)
+    if customer_id:
+        _link_customer_session(customer_id, session["session_id"])
+
     state = _store.get_state(session)
     if not state.queue:
         raise RuntimeError("Priority queue is empty")

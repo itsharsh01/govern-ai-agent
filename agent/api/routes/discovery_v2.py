@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 
 from agent.api.discovery_schemas_v2 import (
     CompletionResponse,
     CreateSessionRequest,
+    CustomerDiscoveryStatusResponse,
     SessionSummaryResponse,
     TurnRequest,
 )
+from agent.api.routes.auth import get_current_customer
+from agent.api.schemas import CustomerRecord
 from agent.discovery_v2.boot import create_session, iter_boot_events
 from agent.discovery_v2.models import TurnResponse
 from agent.discovery_v2.session_store import SessionStore
@@ -18,6 +21,44 @@ from agent.discovery_v2.turn_runner import iter_turn_events, run_turn
 
 router = APIRouter(prefix="/discovery", tags=["discovery-v2"])
 _store = SessionStore()
+
+
+def _status_for_customer(customer_id: str) -> CustomerDiscoveryStatusResponse:
+    session = _store.find_session_for_customer(customer_id)
+    if session is None:
+        return CustomerDiscoveryStatusResponse(
+            customer_id=customer_id,
+            session_id=None,
+            discovery_complete=False,
+            completion_pct=0.0,
+            remaining_keys=0,
+            current_key=None,
+        )
+    state = _store.get_state(session)
+    return CustomerDiscoveryStatusResponse(
+        customer_id=customer_id,
+        session_id=session["session_id"],
+        discovery_complete=state.discovery_complete,
+        completion_pct=state.completion_pct,
+        remaining_keys=state.remaining_keys,
+        current_key=state.current_key,
+    )
+
+
+@router.get(
+    "/customers/{customer_id}/discovery",
+    response_model=CustomerDiscoveryStatusResponse,
+)
+def get_customer_discovery(
+    customer_id: str,
+    customer: CustomerRecord = Depends(get_current_customer),
+) -> CustomerDiscoveryStatusResponse:
+    if customer.id != customer_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot read another customer's discovery session",
+        )
+    return _status_for_customer(customer_id)
 
 
 @router.post("/sessions", response_model=TurnResponse, status_code=status.HTTP_201_CREATED)

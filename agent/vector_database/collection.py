@@ -3,6 +3,26 @@ from __future__ import annotations
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
+PAYLOAD_KEYWORD_INDEX_FIELDS = ("node_type", "name")
+
+
+def ensure_payload_indexes(client: QdrantClient, collection_name: str) -> None:
+    """Create keyword indexes required for ontology search filters."""
+    if not client.collection_exists(collection_name):
+        return
+    for field_name in PAYLOAD_KEYWORD_INDEX_FIELDS:
+        try:
+            client.create_payload_index(
+                collection_name=collection_name,
+                field_name=field_name,
+                field_schema=models.PayloadSchemaType.KEYWORD,
+            )
+        except Exception as exc:
+            message = str(exc).lower()
+            if "already exists" in message or "already has index" in message:
+                continue
+            raise
+
 
 def ensure_collection(
     client: QdrantClient,
@@ -21,6 +41,7 @@ def ensure_collection(
                 f"Collection '{collection_name}' has vector size {current_size}, "
                 f"but model requires {vector_size}. Re-run with --recreate."
             )
+        ensure_payload_indexes(client, collection_name)
         return
 
     if exists and recreate:
@@ -33,3 +54,4 @@ def ensure_collection(
             distance=models.Distance.COSINE,
         ),
     )
+    ensure_payload_indexes(client, collection_name)

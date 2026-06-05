@@ -70,3 +70,30 @@ class SessionStore:
 
     def set_state(self, session: dict[str, Any], state: SessionState) -> None:
         session["state"] = state.model_dump(mode="json")
+
+    def find_session_for_customer(self, customer_id: str) -> dict[str, Any] | None:
+        from agent.api.mongo.repository import load_customer
+
+        try:
+            customer = load_customer(customer_id)
+        except HTTPException:
+            return None
+
+        if customer.discovery_session_id:
+            doc = _collection().find_one({"session_id": customer.discovery_session_id})
+            if doc is not None:
+                doc.pop("_id", None)
+                return doc
+
+        doc = _collection().find_one(
+            {"customer_id": customer_id},
+            sort=[("created_at", 1)],
+        )
+        if doc is None:
+            return None
+        doc.pop("_id", None)
+        if not customer.discovery_session_id:
+            from agent.api.mongo.repository import link_discovery_session
+
+            link_discovery_session(customer_id, doc["session_id"])
+        return doc

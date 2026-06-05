@@ -12,6 +12,12 @@ from agent.discovery_v2.llm import (
 from agent.discovery_v2.models import RiskQueueItem, SessionState
 from agent.discovery_v2.state_ops import already_known_summary
 
+_POLICY_DETAIL_INSTRUCTION = (
+    "Ask a detailed governance question (2–4 sentences). "
+    "Request scope, who it applies to, obligations, prohibitions, exceptions, "
+    "and how the policy is enforced. Do not ask yes/no only."
+)
+
 
 def _build_prompt(
     target_item: RiskQueueItem,
@@ -36,6 +42,16 @@ def _build_prompt(
     )
     if is_cross_question:
         instruction += "The prior answer was unclear — ask a focused follow-up on the same topic. "
+    elif target_item.key.startswith("policies."):
+        instruction += _POLICY_DETAIL_INSTRUCTION
+    elif target_item.answer_type == "tool_registry":
+        instruction += (
+            "Direct the user to the tool registration form below. "
+            "Ask them to add each agent tool with its exact name, what it does, "
+            "access required, and access currently granted. "
+        )
+    if target_item.context_hint:
+        instruction += f"Guidance: {target_item.context_hint} "
     instruction += intro
     return (
         f"{instruction}\n\n"
@@ -49,10 +65,26 @@ def _build_prompt(
 
 def fallback_question(item: RiskQueueItem) -> str:
     label = item.label
+    if item.answer_type == "tool_registry":
+        return (
+            "Please use the tool registration form below to add each agent tool or API "
+            "integration: exact tool name, what it does, access required, and access "
+            "your system currently has."
+        )
+    if item.answer_type == "document_upload":
+        return (
+            f"Please upload governance documents for {label} using the panel below "
+            "(PDF, JSON, or YAML). You may also describe references in text."
+        )
     if item.answer_type == "boolean":
         return f"Does your system involve {label}? Please answer yes or no."
     if item.allowed_values:
         return f"Regarding {label}, which option best applies to your system?"
+    if item.key.startswith("policies."):
+        return (
+            f"Please describe your {label} in detail: scope, who it applies to, "
+            "key rules, exceptions, and how it is enforced."
+        )
     return f"Could you describe {label} for your AI system?"
 
 

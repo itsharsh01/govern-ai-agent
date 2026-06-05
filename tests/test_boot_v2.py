@@ -19,6 +19,7 @@ def test_create_session_returns_question(mock_gen, mock_store):
         "conversation": [],
         "completion_outputs": None,
     }
+    mock_store.find_session_for_customer.return_value = None
     mock_store.create_session.return_value = session
     mock_store.get_state.return_value = state
 

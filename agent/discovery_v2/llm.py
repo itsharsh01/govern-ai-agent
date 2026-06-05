@@ -140,7 +140,7 @@ def _generate_one(model: str, prompt: str, system: str | None) -> str:
         model=model,
         messages=_messages(prompt, system),
         temperature=0.3,
-        max_tokens=512,
+        max_tokens=2048,
     )
     choice = response.choices[0] if response.choices else None
     return (choice.message.content or "").strip() if choice and choice.message else ""
@@ -222,15 +222,56 @@ def stream_generate_text(prompt: str, system: str | None = None) -> Iterator[str
     _mark_llm_degraded()
 
 
-def generate_json(prompt: str, system: str | None = None) -> dict[str, Any]:
-    text = generate_text(prompt + "\n\nRespond with valid JSON only.", system=system)
-    if not text:
-        return {}
+def _extract_json(text: str) -> Any:
+    """Best-effort extraction of a JSON value from possibly-noisy LLM output.
+
+    Handles markdown fences with leading prose (e.g. "### Heading\n```json ..."),
+    and falls back to slicing the first balanced array/object in the text.
+    """
     text = text.strip()
-    if text.startswith("```"):
-        text = re.sub(r"^```(?:json)?\s*", "", text)
-        text = re.sub(r"\s*```$", "", text)
+
+    # 1) Prefer a fenced ```json ... ``` block anywhere in the text.
+    fence = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL | re.IGNORECASE)
+    if fence:
+        candidate = fence.group(1).strip()
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            text = candidate  # fall through to bracket slicing on the inner block
+
+    # 2) Try parsing the whole thing directly.
     try:
         return json.loads(text)
     except json.JSONDecodeError:
+        pass
+
+    # 3) Slice from the first array/object opener to its matching closer.
+    start = min(
+        (i for i in (text.find("["), text.find("{")) if i != -1),
+        default=-1,
+    )
+    if start == -1:
+        return None
+    opener = text[start]
+    closer = "]" if opener == "[" else "}"
+    depth = 0
+    for idx in range(start, len(text)):
+        ch = text[idx]
+        if ch == opener:
+            depth += 1
+        elif ch == closer:
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(text[start : idx + 1])
+                except json.JSONDecodeError:
+                    return None
+    return None
+
+
+def generate_json(prompt: str, system: str | None = None) -> Any:
+    text = generate_text(prompt + "\n\nRespond with valid JSON only.", system=system)
+    if not text:
         return {}
+    parsed = _extract_json(text)
+    return parsed if parsed is not None else {}

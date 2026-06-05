@@ -1260,6 +1260,68 @@ CREATE (ri)-[:VIOLATES]->(r);
 // RETURN ag.name, a.name;
 
 // ============================================================
+//  SECTION 3b — CRM / CUSTOMER DATA TOOL TEMPLATE (CAN_ACCESS)
+// ============================================================
+
+CREATE (:AgentTool:OntologyNode {
+  name:        'CRM Tool',
+  category:    'Agent tool',
+  risk:        'High',
+  description: 'Customer relationship management integration for profile lookup, contact history, and account context.',
+  access_type: 'read_only',
+  scope:       ['customer_profile','contact_history','account_context'],
+  auth_method: 'OAuth2_scoped_token',
+  agents_using: ['customer_support_agent','banking_assistant']
+});
+
+CREATE (:PersonalInformation:OntologyNode {
+  name:        'Customer Email',
+  category:    'Personal information',
+  risk:        'High',
+  description: 'Customer email addresses used for notifications, authentication, and support correspondence.',
+  sub_types:   ['email'],
+  data_classifications: ['PII','GDPR_personal_data'],
+  encryption_required: true
+});
+
+CREATE (:PersonalInformation:OntologyNode {
+  name:        'Phone Number',
+  category:    'Personal information',
+  risk:        'High',
+  description: 'Customer mobile and landline numbers used for MFA, alerts, and support callbacks.',
+  sub_types:   ['phone'],
+  data_classifications: ['PII','GDPR_personal_data'],
+  encryption_required: true
+});
+
+CREATE (:SensitiveFinancialData:OntologyNode {
+  name:        'Account Number',
+  category:    'Sensitive financial data',
+  risk:        'Critical',
+  description: 'Primary customer account identifiers used for banking and CRM lookups.',
+  sub_types:   ['account_number'],
+  data_classifications: ['financial_confidential','PII'],
+  encryption_required: true
+});
+
+// --- Tool → data (CAN_ACCESS template edges for instance propagation) ---
+
+MATCH (crm:OntologyNode {name:'CRM Tool'}),
+      (email:OntologyNode {name:'Customer Email'}),
+      (phone:OntologyNode {name:'Phone Number'}),
+      (acct:OntologyNode {name:'Account Number'})
+CREATE (crm)-[:CAN_ACCESS {scope:'read_only', auth:'OAuth2_scoped'}]->(email),
+       (crm)-[:CAN_ACCESS {scope:'read_only', auth:'OAuth2_scoped'}]->(phone),
+       (crm)-[:CAN_ACCESS {scope:'read_only', auth:'OAuth2_scoped'}]->(acct);
+
+MATCH (api:OntologyNode {name:'Account inquiry API'}),
+      (bal:OntologyNode {name:'Account balance & transaction history'}),
+      (pii:OntologyNode {name:'Customer PII'})
+CREATE (api)-[:CAN_ACCESS {scope:'read_only', auth:'OAuth2_scoped'}]->(bal),
+       (api)-[:CAN_ACCESS {scope:'read_only', auth:'OAuth2_scoped'}]->(pii);
+
+
+// ============================================================
 //  END OF ONTOLOGY
 //  Node count:   54  (10 assets · 8 tools · 12 sec risks · 4 priv risks
 //                     · 16 controls · 10 regs/gov · 6 agents)

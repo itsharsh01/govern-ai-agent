@@ -37,3 +37,12 @@ class CompletionResponse(BaseModel):
     discovered: dict[str, Any]
     discovered_risks: list[dict[str, Any]]
     governance_readiness_report: dict[str, Any]
+
+
+class CustomerDiscoveryStatusResponse(BaseModel):
+    customer_id: str
+    session_id: str | None = None
+    discovery_complete: bool
+    completion_pct: float = 0.0
+    remaining_keys: int = 0
+    current_key: str | None = None

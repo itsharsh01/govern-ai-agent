@@ -48,3 +48,33 @@ def test_post_turn_v2(mock_turn, client):
     )
     assert res.status_code == 200
     assert "assistant_message" in res.json()
+
+
+@patch("agent.api.routes.discovery_v2._status_for_customer")
+@patch("agent.api.routes.auth.load_customer")
+@patch("agent.api.routes.auth.decode_access_token", return_value={"sub": "cust-1"})
+def test_get_customer_discovery(mock_decode, mock_load_customer, mock_status, client):
+    from agent.api.discovery_schemas_v2 import CustomerDiscoveryStatusResponse
+    from agent.api.schemas import CustomerRecord
+
+    mock_load_customer.return_value = CustomerRecord(
+        id="cust-1",
+        name="Test",
+        email="test@example.com",
+    )
+    mock_status.return_value = CustomerDiscoveryStatusResponse(
+        customer_id="cust-1",
+        session_id="sess-1",
+        discovery_complete=True,
+        completion_pct=1.0,
+        remaining_keys=0,
+        current_key=None,
+    )
+    res = client.get(
+        "/api/v2/discovery/customers/cust-1/discovery",
+        headers={"Authorization": "Bearer token"},
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["session_id"] == "sess-1"
+    assert body["discovery_complete"] is True

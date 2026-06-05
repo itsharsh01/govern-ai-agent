@@ -187,6 +187,20 @@ def build_ui_hint(item: RiskQueueItem | None) -> UIHint | None:
             allowed_values=item.allowed_values,
             min_selections=1,
         )
+    if item.answer_type == "tool_registry":
+        return UIHint(
+            interaction_type="tool_registry",
+            field_key=item.key,
+            label=item.label,
+            min_selections=1,
+        )
+    if item.answer_type == "document_upload":
+        return UIHint(
+            interaction_type="document_upload",
+            field_key=item.key,
+            label=item.label,
+            max_selections=5,
+        )
     return UIHint(
         interaction_type="text",
         field_key=item.key,
